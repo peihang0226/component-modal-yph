@@ -16,3 +16,17 @@ If the standalone TypeScript plugin doesn't feel fast enough to you, Volar has a
    1. Run `Extensions: Show Built-in Extensions` from VSCode's command palette
    2. Find `TypeScript and JavaScript Language Features`, right click and select `Disable (Workspace)`
 2. Reload the VSCode window by running `Developer: Reload Window` from the command palette.
+
+实现一个Modal组件，首先确定需要完成的内容：
+
+遮罩层
+标题内容
+主体内容
+确定和取消按钮
+主体内容需要灵活，所以可以是字符串，也可以是一段 html 代码
+
+特点是它们在当前vue实例之外独立存在，通常挂载于body之上
+
+除了通过引入import的形式，我们还可通过API的形式进行组件的调用
+
+还可以包括配置全局样式、国际化、与typeScript结合
