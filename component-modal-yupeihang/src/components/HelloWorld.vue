@@ -1,18 +1,21 @@
 <script setup lang="ts">
-import { ref } from 'vue'
-
+import modal from '../plugins/modal/Modal.vue'
+import { reactive, ref } from 'vue'
 defineProps<{ msg: string }>()
-
-const count = ref(0)
+let modalData = reactive({
+  showModal: false,
+  title: 'test',
+  content: 'sdanasdnjkasnjkasdjknasdjnk'
+})
+function showModal(){
+  modalData.showModal = true
+}
 </script>
 
 <template>
   <div class="card">
-    <button type="button" @click="count++">count is {{ count }}</button>
-    <p>
-      Edit
-      <code>components/HelloWorld.vue</code> to test HMR
-    </p>
+    <button type="button" @click="showModal()">count is</button>
+    <modal :modalData="modalData"></modal>
   </div>
 </template>
 
