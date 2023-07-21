@@ -1,21 +1,28 @@
 <script setup lang="ts">
-import modal from '../plugins/modal/Modal.vue'
+import Modal from '../plugins/modal/Modal.vue'
 import { reactive, ref } from 'vue'
 defineProps<{ msg: string }>()
 let modalData = reactive({
-  showModal: false,
   title: 'test',
   content: 'sdanasdnjkasnjkasdjknasdjnk'
 })
-function showModal(){
-  modalData.showModal = true
+let showModal = ref()
+function show(){
+  showModal.value = true
+  modalData = {
+    title: 'test2',
+    content: '---------222222-----------------'
+  }
+}
+function cancle() {
+  showModal.value = false
 }
 </script>
 
 <template>
   <div class="card">
-    <button type="button" @click="showModal()">count is</button>
-    <modal :modalData="modalData"></modal>
+    <button type="button" @click="show()">count is</button>
+    <Modal :modalData="modalData" :showModal="showModal" @cancel="cancle()"></Modal>
   </div>
 </template>
 
