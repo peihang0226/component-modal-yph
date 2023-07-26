@@ -1,138 +1,196 @@
-<!-- 基础组件 -->
-
 <template>
-  <Teleport :to="props.getContainer">
-    <!-- 蒙层 -->
-    <div class="wrapper" v-if="props.showModal" @click="throwSet('cancel',$event)">
-      <Transition>
-        <div class="modal" :style="{width:props.width + 'px',zIndex:props.zIndex}">
-          <div class="closeIcon" v-if="props.closable">x</div>
-          <div class="title">
-            {{ props.modalData.title }}
-          </div>
-          <div class="content">
-            {{ props.modalData.content }}
-          </div> 
-          <div v-if="props.footer !== null">
-            <div v-if="props.footer != ''" v-html="props.footer" class="footer"></div>
-            <div class="footer" v-else>
-              <button @click.stop="throwSet('cancel',$event)" ref="butCancel">{{ props.cancelText }}</button>
-              <button @click.stop="throwSet('ok',$event)" ref="butOk">{{ props.okText }}</button>
-            </div>
-          </div>
+  <Teleport to="body" :disabled="!isTeleport">
+    <div v-if="modelValue" class="modal">
+      <div class="mask" @click="maskClose && !loading && handleCancel()"></div>
+      <div class="modal_main">
+        <div class="modal_title">
+          <span>{{ title || '提示' }}</span>
+          <span v-if="close" title="关闭" class="close" @click="!loading && handleCancel()">✕</span>
         </div>
-      </Transition>
+        <div class="modal_content">
+          <Content v-if="typeof content === 'function'" :render="content" />
+          <slot v-else>
+            <img src="./img/warn.png" class="content_img" alt="warn" v-if="icon == 'warn'">{{ content }}
+          </slot>
+        </div>
+        <div class="modal_btns">
+          <button class="btn confirm" :disabled="loading" @click="handleConfirm">
+            <span class="loading" v-if="loading"> ❍ </span>
+            {{ confirmText }}
+          </button>
+          <button class="btn cancel" @click="!loading && handleCancel()">{{ cancelText }}</button>
+        </div>
+      </div>
     </div>
   </Teleport>
 </template>
-<script setup lang="ts">
-import { withDefaults, watch, nextTick, defineProps, ref, getCurrentInstance } from 'vue'
-import { modalProps } from "./config";
-// let event:Event;
-// let downEvent:Event;
-// let n = 1;
-// //弹框实例
-// const models = ref();
-//取消实例
-const butCancel = ref();
-//确定实例
-const butOk = ref();
-interface Props {
-  showModal?: boolean,
-  cancelText?: string, // 取消按钮文字
-  closable?: boolean, // 是否显示关闭图标
-  confirmLoading?: boolean,
-  footer?: object | string,
-  getContainer?: Element | string,
-  wrapperClosable?: boolean, // 点击蒙层关闭modal
-  modalData?: object,
-  okText?: string,
-  okType?: string,
-  title?: string,
-  content?: string,
-  visible?: boolean,
-  width?: string | number,
-  wrapClassName?: string,
-  zIndex?: number,
-  dialogStyle?: object | string,
-  dialogClass?: string
-  autoFocusButton?:null | string,
-}
-const props = withDefaults(defineProps<Props>(), {
-  ...modalProps
-})
-const emit = defineEmits([ 'ok', 'cancel'])
-//向子组件抛事件的回调
-function throwSet(type:any,$event:Event) {
-  if(($event.target as HTMLInputElement).classList.contains('modal')) return
-  if(($event.target as HTMLInputElement).classList.contains('wrapper')){
-    if (!props.wrapperClosable) return
-  }
-  emit(type)
-}
 
+<script lang="ts" setup name="RootModal">
+import {
+  getCurrentInstance,
+  onBeforeMount,
+  PropType
+} from 'vue'
+import Content from './Content'
+import config from './config'
+import { IContent, IInstance } from './modal.type'
+
+defineProps({
+  isTeleport: { type: Boolean, default: true },
+  modelValue: { type: Boolean, default: false, require: true },
+  title: {
+    type: String,
+    default: ''
+  },
+  icon: {
+    type: String,
+    default: 'none'
+  },
+  content: {
+    type: [String, Function] as PropType<string | IContent>,
+    default: '',
+    require: true
+  },
+  loading: {
+    type: Boolean,
+    default: false
+  },
+  close: {
+    type: Boolean,
+    default: () => config!.close
+  },
+  maskClose: {
+    type: Boolean,
+    default: () => config!.maskClose
+  },
+  confirmText: {
+    type: String,
+    default: '确定'
+  },
+  cancelText: {
+    type: String,
+    default: '取消'
+  }
+})
+
+const emit = defineEmits(['on-confirm', 'on-cancel', 'update:modelValue'])
+
+let instance = getCurrentInstance() as IInstance
+onBeforeMount(() => {
+  instance._hub = {
+    'on-cancel': () => { },
+    'on-confirm': () => { }
+  }
+})
+
+const handleConfirm = () => {
+  emit('on-confirm')
+  instance._hub['on-confirm']()
+}
+const handleCancel = () => {
+  emit('on-cancel')
+  emit('update:modelValue', false)
+  instance._hub['on-cancel']()
+}
 </script>
-<style scoped>
-.wrapper {
-  width: 100vw;
-  min-height: 100vh;
-  position: fixed;
-  top: 0;
-  left: 0;
-  z-index: 1000;
-  background: rgba(0, 0, 0, 0.6);
-  display: flex;
-  justify-content: center;
-  align-items: center;
+<style lang="less" scoped>
+@keyframes rotate {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
 .modal {
-  width: 200px;
-  height: 200px;
-  background: #fff;
-  position: relative;
-}
-.closeIcon {
- position: absolute;
- right: 0;
- top: 0;
- font-size: 50px;
- line-height: 30px;
-}
-.footer{
-    padding: 20px 20px 20px 0;
-    border-top: 1px solid #e8e8e8;
-    display: flex;
-    justify-content: flex-end;
-}
-.footer>button{
-    line-height: 1.499;
-    position: relative;
-    display: inline-block;
-    font-weight: 400;
-    white-space: nowrap;
-    text-align: center;
-    background-image: none;
-    box-shadow: 0 2px 0 rgba(0,0,0,.015);
-    cursor: pointer;
-    transition: all .3s cubic-bezier(.645,.045,.355,1);
-    -webkit-user-select: none;
-    -moz-user-select: none;
-    user-select: none;
-    touch-action: manipulation;
-    height: 32px;
-    padding: 0 15px;
-    font-size: 14px;
-    border-radius: 4px;
-    color: rgba(0,0,0,.65);
-    background-color: #fff;
-    border: 1px solid #d9d9d9;
-}
-.footer>button:last-child{
-    margin-left: 10px;
-    color: #fff;
-    background-color: #1890ff;
-    border-color: #1890ff;
-    text-shadow: 0 -1px 0 rgba(0,0,0,.12);
-    box-shadow: 0 2px 0 rgba(0,0,0,.045);
+  .mask {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 9999;
+    background-color: rgba(0, 0, 0, 0.45);
+  }
+  .modal_main {
+    width: 400px;
+    min-height: 180px;
+    background: #FFFFFF;
+    border-radius: 10px;
+    z-index: 10000;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    .modal_title {
+      width: 100%;
+      height: 50px;
+      padding: 0 20px;
+      box-sizing: border-box;
+      font-size: 18px;
+      color: #333333;
+      line-height: 50px;
+      font-weight: 400;
+      position: relative;
+      .close {
+        font-size: 10px;
+        color: #93969C;
+        position: absolute;
+        top: 50%;
+        right: 19px;
+        transform: translateY(-50%);
+        cursor: pointer;
+      }
+    }
+    .modal_content {
+      width: 100%;
+      min-height: 30px;
+      padding: 20px;
+      box-sizing: border-box;
+      font-size: 16px;
+      color: #333333;
+      line-height: 30px;
+      .content_img {
+        width: 30px;
+        height: 30px;
+        display: inline-block;
+        margin-right: 9px;
+        margin-top: -3px;
+      }
+    }
+    .modal_btns {
+      min-height: 60px;
+      padding: 10px 20px 20px;
+      box-sizing: border-box;
+      .loading {
+        display: inline-block;
+        margin-right: 5px;
+        animation: rotate 1s infinite linear;
+      }
+      .btn {
+        min-width: 80px;
+        height: 30px;
+        padding: 0 9px;
+        text-align: center;
+        font-size: 14px;
+        color: #333333;
+        line-height: 28px;
+        float: right;
+        border: 1px solid #EEEFF2;
+        background-color: #fff;
+        border-radius: 4px;
+        margin-left: 20px;
+      }
+      .confirm {
+        border: 1px solid @primary-color;
+        background-color: @primary-color;
+        color: #fff;
+      }
+      .cancel:hover {
+        border: 1px solid @primary-color;
+        color: @primary-color;
+      }
+    }
+  }
 }
 </style>

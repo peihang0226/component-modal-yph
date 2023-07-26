@@ -1,21 +1,11 @@
 // 全局默认配置
-
-export const modalProps= {
-  showModal: false,
-  cancelText : '取消',
-  centered : false,
-  closable : true,
-  confirmLoading : false,
-  destroyOnClose : false,
-  footer:'',
-  forceRender : false,
-  keyboard : true,
-  wrapperClosable : false,
-  okText : '确定',
-  title : 'test',
-  width : 200,
-  zIndex : 1000,
-  getContainer:'body',
-  autoFocusButton:'ok',
-  dialogStyle:{},
+import { ConfigType } from './modal.type'
+const config: ConfigType = {
+  // 是否显示右上角的关闭按钮，默认开启
+  close: true,
+  // 点击蒙层是否允许关闭，默认开启
+  maskClose: true,
+  confirmText: '确定',
+  cancelText: '取消'
 }
+export default config

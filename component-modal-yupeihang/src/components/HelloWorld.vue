@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import Modal from '../plugins/modal/Modal.vue'
+import Modal from './Modal.vue'
 import { reactive, ref } from 'vue'
 defineProps<{ msg: string }>()
 let modalData = reactive({
